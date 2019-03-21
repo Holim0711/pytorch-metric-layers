@@ -4,7 +4,10 @@ from sklearn.metrics import label_ranking_average_precision_score as lrap_score
 class PrcRecTopK():
     def __init__(self, k=[1]):
         self.k = sorted(k, reverse=True)
-        self.right = [0] * len(k)
+        self.__zero__()
+
+    def __zero__(self):
+        self.right = [0] * len(self.k)
         self.n_label = 0
         self.n_sample = 0
 
@@ -26,7 +29,7 @@ class PrcRecTopK():
             ("recall@%d" % k) : x / self.n_label
             for x, k in zip(self.right, self.k)
         })
-        self.__init__()
+        self.__zero__()
         return results
 
 

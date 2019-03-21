@@ -1,7 +1,10 @@
 class AccTopK():
     def __init__(self, k=[1]):
         self.k = sorted(k, reverse=True)
-        self.right = [0] * len(k)
+        self.__zero__()
+
+    def __zero__(self):
+        self.right = [0] * len(self.k)
         self.total = 0
 
     def update(self, pred, true):
@@ -16,7 +19,7 @@ class AccTopK():
             ("accuracy@%d" % k) : (x / self.total)
             for k, x in zip(self.k, self.right)
         }
-        self.__init__()
+        self.__zero__()
         return acc
 
 
