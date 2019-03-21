@@ -36,7 +36,7 @@ class LRAP():
         self.n_sample = 0
 
     def update(self, pred, true):
-        self.Σ += lrap_score(true, pred) * len(true)
+        self.Σ += lrap_score(true.cpu(), pred.cpu()) * len(true)
         self.n_sample += len(true)
 
     def commit(self):
