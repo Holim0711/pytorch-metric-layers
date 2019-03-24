@@ -1,6 +1,7 @@
 class AccTopK():
-    def __init__(self, k=[1]):
+    def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
+        self.prefix = (prefix + "_") if prefix else ""
         self.__zero__()
 
     def __zero__(self):
@@ -16,7 +17,7 @@ class AccTopK():
 
     def commit(self):
         acc = {
-            ("accuracy@%d" % k) : (x / self.total)
+            (self.prefix + "accuracy@%d" % k) : (x / self.total)
             for k, x in zip(self.k, self.right)
         }
         self.__zero__()

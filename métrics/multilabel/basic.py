@@ -2,8 +2,9 @@ from sklearn.metrics import label_ranking_average_precision_score as lrap_score
 
 
 class PrcRecTopK():
-    def __init__(self, k=[1]):
+    def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
+        self.prefix = (prefix + "_") if prefix else ""
         self.__zero__()
 
     def __zero__(self):
@@ -22,11 +23,11 @@ class PrcRecTopK():
 
     def commit(self):
         results = {
-            ("precision@%d" % k) : x / (k * self.n_sample)
+            (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
             for x, k in zip(self.right, self.k)
         }
         results.update({
-            ("recall@%d" % k) : x / self.n_label
+            (self.prefix + "recall@%d" % k) : x / self.n_label
             for x, k in zip(self.right, self.k)
         })
         self.__zero__()
@@ -34,9 +35,10 @@ class PrcRecTopK():
 
 
 class LRAP():
-    def __init__(self):
+    def __init__(self, prefix=None):
         self.Σ = 0.0
         self.n_sample = 0
+        self.prefix = (prefix + "_") if prefix else ""
 
     def update(self, pred, true):
         self.Σ += lrap_score(true.cpu(), pred.cpu()) * len(true)
@@ -45,7 +47,7 @@ class LRAP():
     def commit(self):
         lrap = self.Σ / self.n_sample
         self.__init__()
-        return {"lrap" : lrap}
+        return {(self.prefix + "lrap") : lrap}
 
 
 if __name__ == "__main__":
