@@ -1,6 +1,31 @@
 from sklearn.metrics import label_ranking_average_precision_score as lrap_score
 
 
+class PrcTopK():
+    def __init__(self, k=[1], prefix=None):
+        self.k = sorted(k, reverse=True)
+        self.prefix = (prefix + "_") if prefix else ""
+        self.__zero__()
+
+    def __zero__(self):
+        self.right = [0] * len(self.k)
+        self.n_sample = 0
+
+    def update(self, pred, true):
+        rank = pred.argsort(descending=True)
+        for i, k in enumerate(self.k):
+            rank = rank[:, :k]
+            for p, q in zip(rank, true):
+                self.right[i] += q[p].long().sum().item()
+        self.n_sample += len(true)
+
+    def commit(self):
+        return {
+            (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
+            for x, k in zip(self.right, self.k)
+        }
+
+
 class PrcRecTopK():
     def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
