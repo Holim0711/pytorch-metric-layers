@@ -5,6 +5,7 @@ class PrcTopK():
     def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
         self.prefix = (prefix + "_") if prefix else ""
+        self.result = {}
         self.__zero__()
 
     def __zero__(self):
@@ -20,16 +21,24 @@ class PrcTopK():
         self.n_sample += len(true)
 
     def commit(self):
-        return {
+        self.result = {
             (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
             for x, k in zip(self.right, self.k)
         }
+        self.__zero__()
+
+    def __getitem__(self, key):
+        return self.result[key]
+
+    def items(self):
+        return self.result.items()
 
 
 class PrcRecTopK():
     def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
         self.prefix = (prefix + "_") if prefix else ""
+        self.result = {}
         self.__zero__()
 
     def __zero__(self):
@@ -47,32 +56,46 @@ class PrcRecTopK():
         self.n_sample += len(true)
 
     def commit(self):
-        results = {
+        self.result = {
             (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
             for x, k in zip(self.right, self.k)
         }
-        results.update({
+        self.result.update({
             (self.prefix + "recall@%d" % k) : x / self.n_label
             for x, k in zip(self.right, self.k)
         })
         self.__zero__()
-        return results
+
+    def __getitem__(self, key):
+        return self.result[key]
+
+    def items(self):
+        return self.result.items()
 
 
 class LRAP():
     def __init__(self, prefix=None):
+        self.prefix = (prefix + "_") if prefix else ""
+        self.result = {}
+        self.__zero__()
+
+    def __zero__(self):
         self.Σ = 0.0
         self.n_sample = 0
-        self.prefix = (prefix + "_") if prefix else ""
 
     def update(self, pred, true):
         self.Σ += lrap_score(true.cpu(), pred.cpu()) * len(true)
         self.n_sample += len(true)
 
     def commit(self):
-        lrap = self.Σ / self.n_sample
-        self.__init__()
-        return {(self.prefix + "lrap") : lrap}
+        self.result = {(self.prefix + "lrap") : self.Σ / self.n_sample}
+        self.__zero__()
+
+    def __getitem__(self, key):
+        return self.result[key]
+
+    def items(self):
+        return self.result.items()
 
 
 if __name__ == "__main__":
@@ -112,13 +135,13 @@ if __name__ == "__main__":
             topk.update(p, t)
         print("Time PrcRecTopK:", time() - start)
 
-        result = topk.commit()
-        assert(result['precision@1'] == (4 / 6))
-        assert(result['precision@3'] == (10 / 18))
-        assert(result['precision@5'] == (14 / 30))
-        assert(result['recall@1'] == (4 / 23))
-        assert(result['recall@3'] == (10 / 23))
-        assert(result['recall@5'] == (14 / 23))
+        topk.commit()
+        assert(topk['precision@1'] == (4 / 6))
+        assert(topk['precision@3'] == (10 / 18))
+        assert(topk['precision@5'] == (14 / 30))
+        assert(topk['recall@1'] == (4 / 23))
+        assert(topk['recall@3'] == (10 / 23))
+        assert(topk['recall@5'] == (14 / 23))
 
     def Test_LRAP():
         lrap = LRAP()
@@ -128,10 +151,10 @@ if __name__ == "__main__":
             lrap.update(p, t)
         print("Time LRAP:", time() - start)
 
-        result = lrap.commit()
+        lrap.commit()
 
         gold = lrap_score(torch.cat(true), torch.cat(pred))
-        assert(result['lrap'] == gold)
+        assert(lrap['lrap'] == gold)
 
     Test_PrcRecTopK()
     Test_LRAP()

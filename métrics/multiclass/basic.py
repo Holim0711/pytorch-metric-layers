@@ -2,6 +2,7 @@ class AccTopK():
     def __init__(self, k=[1], prefix=None):
         self.k = sorted(k, reverse=True)
         self.prefix = (prefix + "_") if prefix else ""
+        self.result = {}
         self.__zero__()
 
     def __zero__(self):
@@ -16,12 +17,17 @@ class AccTopK():
         self.total += len(true)
 
     def commit(self):
-        acc = {
+        self.result = {
             (self.prefix + "accuracy@%d" % k) : (x / self.total)
             for k, x in zip(self.k, self.right)
         }
         self.__zero__()
-        return acc
+
+    def __getitem__(self, key):
+        return self.result[key]
+
+    def items(self):
+        return self.result.items()
 
 
 if __name__ == "__main__":
@@ -56,8 +62,8 @@ if __name__ == "__main__":
             topk.update(p, t)
         print("Time LRAP:", time() - start)
 
-        result = topk.commit()
-        assert(result['accuracy@3'] == (2 / 6))
-        assert(result['accuracy@5'] == (3 / 6))
+        topk.commit()
+        assert(topk['accuracy@3'] == (2 / 6))
+        assert(topk['accuracy@5'] == (3 / 6))
 
     Test_AccTopK()
