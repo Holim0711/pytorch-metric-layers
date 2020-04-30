@@ -1,3 +1,4 @@
+import os
 import sklearn.metrics as skm
 
 
@@ -36,4 +37,8 @@ def save_confusion_matrix(filename, output_path,
     cm = confusion_matrix(filename, labels=labels, normalize=normalize)
     display = skm.ConfusionMatrixDisplay(cm, labels)
     display = display.plot(cmap=cmap, xticks_rotation=xticks_rotation)
+    try:
+        os.makedirs(os.path.dirname(output_path))
+    except OSError:
+        pass
     display.figure_.savefig(output_path)
