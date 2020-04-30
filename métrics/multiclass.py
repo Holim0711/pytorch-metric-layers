@@ -1,4 +1,5 @@
 import os
+import json
 import sklearn.metrics as skm
 
 
@@ -22,7 +23,7 @@ def accuracy_score(filename, top=1):
     return  n_right / n_total
 
 
-def confusion_matrix(filename, labels=None, normalize=None)
+def confusion_matrix(filename, labels=None, normalize=None):
     with open(filename) as file:
         data = [json.loads(line) for line in file]
 
@@ -34,7 +35,7 @@ def confusion_matrix(filename, labels=None, normalize=None)
 def save_confusion_matrix(filename, output_path,
                           labels=None, normalize=None,
                           cmap='Blues', xticks_rotation='vertical'):
-    cm = confusion_matrix(filename, labels=labels, normalize=normalize)
+    cm = confusion_matrix(filename, normalize=normalize)
     display = skm.ConfusionMatrixDisplay(cm, labels)
     display = display.plot(cmap=cmap, xticks_rotation=xticks_rotation)
     try:
