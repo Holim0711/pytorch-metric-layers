@@ -1,167 +1,19 @@
-from sklearn.metrics import label_ranking_average_precision_score as lrap_score
+from sklearn.metrics import label_ranking_average_precision_score
 
 
 __all__ = [
-    'PrcTopK',
-    'PrcRecTopK',
-    'LRAP',
+    'recall_score',
+    'lrap_score',
 ]
 
 
-class PrcTopK():
-    def __init__(self, k=[1], prefix=None):
-        self.k = sorted(k, reverse=True)
-        self.prefix = (prefix + "_") if prefix else ""
-        self.result = {}
-        self.__zero__()
-
-    def __zero__(self):
-        self.right = [0] * len(self.k)
-        self.n_sample = 0
-
-    def update(self, pred, true):
-        rank = pred.argsort(descending=True)
-        for i, k in enumerate(self.k):
-            rank = rank[:, :k]
-            for p, q in zip(rank, true):
-                self.right[i] += q[p].long().sum().item()
-        self.n_sample += len(true)
-
-    def commit(self):
-        self.result = {
-            (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
-            for x, k in zip(self.right, self.k)
-        }
-        self.__zero__()
-
-    def __getitem__(self, key):
-        return self.result[key]
-
-    def items(self):
-        return self.result.items()
+def perclass_recall_score(filename, top=None, threshold=None):
+    with open(filename) as file:
+        data = [json.loads(line) for line in file]
+    raise NotImplementedError()
 
 
-class PrcRecTopK():
-    def __init__(self, k=[1], prefix=None):
-        self.k = sorted(k, reverse=True)
-        self.prefix = (prefix + "_") if prefix else ""
-        self.result = {}
-        self.__zero__()
-
-    def __zero__(self):
-        self.right = [0] * len(self.k)
-        self.n_label = 0
-        self.n_sample = 0
-
-    def update(self, pred, true):
-        rank = pred.argsort(descending=True)
-        for i, k in enumerate(self.k):
-            rank = rank[:, :k]
-            for p, q in zip(rank, true):
-                self.right[i] += q[p].long().sum().item()
-        self.n_label += true.long().sum().item()
-        self.n_sample += len(true)
-
-    def commit(self):
-        self.result = {
-            (self.prefix + "precision@%d" % k) : x / (k * self.n_sample)
-            for x, k in zip(self.right, self.k)
-        }
-        self.result.update({
-            (self.prefix + "recall@%d" % k) : x / self.n_label
-            for x, k in zip(self.right, self.k)
-        })
-        self.__zero__()
-
-    def __getitem__(self, key):
-        return self.result[key]
-
-    def items(self):
-        return self.result.items()
-
-
-class LRAP():
-    def __init__(self, prefix=None):
-        self.prefix = (prefix + "_") if prefix else ""
-        self.result = {}
-        self.__zero__()
-
-    def __zero__(self):
-        self.Σ = 0.0
-        self.n_sample = 0
-
-    def update(self, pred, true):
-        self.Σ += lrap_score(true.cpu(), pred.cpu()) * len(true)
-        self.n_sample += len(true)
-
-    def commit(self):
-        self.result = {(self.prefix + "lrap") : self.Σ / self.n_sample}
-        self.__zero__()
-
-    def __getitem__(self, key):
-        return self.result[key]
-
-    def items(self):
-        return self.result.items()
-
-
-if __name__ == "__main__":
-    import torch
-    from time import time
-
-    pred = [
-        torch.tensor([
-            [-0.4, -0.2, +0.9, -0.5, +0.8, -0.9, -0.1, -1.5],
-            [+1.6, -0.5, +0.0, -0.5, +1.4, -0.8, +0.5, -2.2],
-            [-1.7, -2.7, +0.3, -0.1, -0.0, +1.1, +0.4, -1.1]
-        ]),
-        torch.tensor([
-            [+0.9, -0.4, -0.5, -0.1, +0.2, +0.4, +1.6, +1.0],
-            [+0.2, -0.7, +0.8, -0.8, -0.9, -0.7, -0.0, -0.1],
-            [-0.2, -0.4, +1.0, -0.2, -1.9, +2.2, -0.3, +0.4]
-        ]),
-    ]
-    true = [
-        torch.tensor([
-            [0, 1, 1, 1, 1, 0, 1, 1],
-            [1, 1, 0, 0, 1, 1, 1, 1],
-            [1, 0, 0, 1, 1, 0, 1, 1]
-        ]),
-        torch.tensor([
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 1, 0, 1, 1, 0, 0],
-            [0, 0, 0, 0, 1, 1, 0, 0]
-        ]),
-    ]
-
-    def Test_PrcRecTopK():
-        topk = PrcRecTopK([1, 3, 5])
-
-        start = time()
-        for p, t in zip(pred, true):
-            topk.update(p, t)
-        print("Time PrcRecTopK:", time() - start)
-
-        topk.commit()
-        assert(topk['precision@1'] == (4 / 6))
-        assert(topk['precision@3'] == (10 / 18))
-        assert(topk['precision@5'] == (14 / 30))
-        assert(topk['recall@1'] == (4 / 23))
-        assert(topk['recall@3'] == (10 / 23))
-        assert(topk['recall@5'] == (14 / 23))
-
-    def Test_LRAP():
-        lrap = LRAP()
-
-        start = time()
-        for p, t in zip(pred, true):
-            lrap.update(p, t)
-        print("Time LRAP:", time() - start)
-
-        lrap.commit()
-
-        gold = lrap_score(torch.cat(true), torch.cat(pred))
-        assert(lrap['lrap'] == gold)
-
-    Test_PrcRecTopK()
-    Test_LRAP()
+def lrap_score(filename):
+    with open(filename) as file:
+        data = [json.loads(line) for line in file]
+    return label_ranking_average_precision_score(zip(*data))
