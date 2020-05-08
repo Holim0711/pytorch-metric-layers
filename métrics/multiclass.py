@@ -6,6 +6,7 @@ from .utils import read_logfile
 
 __all__ = [
     'accuracy_score',
+    'balanced_accuracy_score',
     'confusion_matrix',
     'save_confusion_matrix',
 ]
@@ -23,6 +24,16 @@ def accuracy_score(filename, top=1):
     Nt = len(data)
 
     return Nc / Nt
+
+
+def balanced_accuracy_score(filename):
+    data = read_logfile(filename)
+
+    true, pred = [*zip(*data)]
+
+    pred = [argmax(x) for x in pred]
+
+    return skm.balanced_accuracy_score(true, pred)
 
 
 def confusion_matrix(filename, labels=None, normalize=None):
