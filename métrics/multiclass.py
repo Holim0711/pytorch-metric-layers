@@ -20,7 +20,7 @@ def accuracy_score(filename, top=1):
 
     n_right = sum(sum(x > out[trg] for x in out) < top for trg, out in data)
     n_total = len(data)
-    return  n_right / n_total
+    return n_right / n_total
 
 
 def confusion_matrix(filename, labels=None, normalize=None):
