@@ -1,6 +1,7 @@
 import os
 import json
 import sklearn.metrics as skm
+from .utils import read_logfile
 
 
 __all__ = [
@@ -15,21 +16,23 @@ def argmax(list):
 
 
 def accuracy_score(filename, top=1):
-    with open(filename) as file:
-        data = [json.loads(line) for line in file]
+    data = read_logfile(filename)
 
-    n_right = sum(sum(x > out[trg] for x in out) < top for trg, out in data)
-    n_total = len(data)
-    return n_right / n_total
+    Nc = sum(sum(x > out[trg] for x in out) < top for trg, out in data)
+
+    Nt = len(data)
+
+    return Nc / Nt
 
 
 def confusion_matrix(filename, labels=None, normalize=None):
-    with open(filename) as file:
-        data = [json.loads(line) for line in file]
+    data = read_logfile(filename)
 
-    trg = [x for x, y in data]
-    out = [argmax(y) for x, y in data]
-    return skm.confusion_matrix(trg, out, labels=labels, normalize=normalize)
+    true, pred = [*zip(*data)]
+
+    pred = [argmax(x) for x in pred]
+
+    return skm.confusion_matrix(true, pred, labels=labels, normalize=normalize)
 
 
 def save_confusion_matrix(filename, output_path,
