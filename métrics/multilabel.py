@@ -41,8 +41,8 @@ def calculate(func, true, pred, method):
         pred = [*zip(*pred)]
         return mean(func(y, ŷ) for y, ŷ in zip(true, pred))
     elif method == 'micro':
-        true = chain.from_iterable(true)
-        pred = chain.from_iterable(pred)
+        true = list(chain.from_iterable(true))
+        pred = list(chain.from_iterable(pred))
         return func(true, pred)
     else:
         raise ValueError(f"Unknown method: {method}")
