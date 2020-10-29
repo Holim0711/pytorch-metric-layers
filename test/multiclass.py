@@ -22,6 +22,20 @@ def test_confusion_matrix_accumulator():
         xlabs=["A", "B", "C", "D", "E", "F", "GGGGGGGGGGGG", "헬로"])
     fig.savefig('test.png')
 
+
+def test_imagenet_accuracy_accumulator():
+    from métrics.multiclass import ImageNetAccuracyAccumulator
+    np.random.seed(0)
+    accumulator = ImageNetAccuracyAccumulator(5)
+    for i in range(3):
+        true = np.random.randint(5, size=(3, 2))
+        pred = np.random.random((3, 10))
+        print(i, 'true\n', true)
+        print(i, 'pred\n', pred)
+        accumulator.update(true, pred)
+    print(accumulator.compute(topk=2))
+
 if __name__ == "__main__":
     np.set_printoptions(precision=3)
-    test_confusion_matrix_accumulator()
+    #test_confusion_matrix_accumulator()
+    test_imagenet_accuracy_accumulator()
