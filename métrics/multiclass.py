@@ -7,7 +7,7 @@ from itertools import product
 __all__ = [
     'ConfusionMatrixAccumulator',
     'ImageNetAccuracyAccumulator',
-    'save_confusion_matrix',
+    'plot_confusion_matrix',
 ]
 
 
